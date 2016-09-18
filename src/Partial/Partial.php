@@ -14,7 +14,13 @@ class Partial
 {
     public static $d = false;
 
-    const SKIP = 'fooooooobarrrrrrrr';
+    /**
+     * SKIP constant
+     * Here we need a value to uniquely identify an "unset" value
+     * NULL can't be used, since it is a valid argument for function calls
+     * so we set it to a "almost-unique" string
+     */
+    const SKIP = '$2a$04$NmoLLFJGcJZjpxVX.39oe.yIX9aXrvdoHQ3UlFrTFSNbjArV/2iSu';
     
     /**
      *
@@ -116,6 +122,17 @@ class Partial
         
         return $this;
     }
+    
+    /**
+     * Test for binding at position
+     * 
+     * @param int $index
+     * @return boolean
+     */
+    public function hasBindingAt($index)
+    {
+        return array_key_exists($index, $this->bindings) && $this->bindings[$index] !== static::SKIP;
+    }
 
     /**
      * 
@@ -129,12 +146,7 @@ class Partial
         
         // merge bindings and supplied arguments
         for ($i = 0; $i < $totalArgs; $i++) {
-            if ( ! isset($this->bindings[$i]) || $this->bindings[$i] === static::SKIP) {
-                array_push($arguments, array_shift($supplied));
-            }
-            else {
-                array_push($arguments, $this->bindings[$i]);
-            }
+            array_push($arguments, $this->hasBindingAt($i) ? $this->bindings[$i] : array_shift($supplied));
         }
         
         return call_user_func_array($this->callable, $arguments);
